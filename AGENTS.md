@@ -29,7 +29,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Helpers en `utils/supabase/`:
   - `server.ts` → `createClient(cookieStore)` para Server Components / Server Actions (`await cookies()`).
   - `client.ts` → `createClient()` para Client Components.
-  - `middleware.ts` → `updateSession(request)` refresca la sesión con `await supabase.auth.getUser()` antes de devolver la respuesta.
+  - `utils/supabase/proxy.ts` → `updateSession(request)` refresca la sesión con `await supabase.auth.getUser()` antes de devolver la respuesta (gate de rutas incluido).
 - `proxy.ts` en la raíz llama a `updateSession`. **Next.js 16**: el file convention `middleware.ts` está deprecado y renombrado a `proxy.ts` (export `proxy`), no crear `middleware.ts`.
 - Reglas de uso:
   - Nunca usar `createClient` de `@supabase/supabase-js` a pelo: pasar siempre por los helpers para que las cookies de sesión se manejen bien.
