@@ -12,8 +12,8 @@
     }
   },
   "references": {
-    "docs": {
-      "path": "./07-DB-Schema"
+    "db-schema": {
+      "path": "../07-DB-Schema"
     }
   }
 }
