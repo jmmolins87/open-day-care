@@ -1,6 +1,6 @@
 # SPEC 07 — Primera tabla `daycares` en Supabase (migraciones versionadas vía MCP)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** —
 > **Fecha:** 2026-10-11
 > **Objetivo:** Crear la tabla `public.daycares` con su fila de seed "Guardería Sala Soles" en el proyecto Supabase remoto, con las migraciones versionadas dentro de la carpeta `supabase/` y aplicadas mediante el MCP de Supabase.
@@ -67,18 +67,18 @@ supabase/
 
 ## Criterios de aceptación
 
-- [ ] La referencia `db-schema` de `opencode.json` apunta a `../07-DB-Schema` y su lectura resuelve.
-- [ ] `supabase/config.toml`, `supabase/.gitignore` y los 2 ficheros de `supabase/migrations/` están versionados; ningún archivo de Supabase vive fuera de `supabase/`.
-- [ ] El nombre de cada fichero de migración lleva el timestamp real (formato `<YYYYMMDDHHMMSS>_nombre.sql`).
-- [ ] En el remoto, `public.daycares` tiene exactamente `id` (uuid PK, default `gen_random_uuid()`), `name` (text NOT NULL) y `created_at` (timestamptz NOT NULL default `now()`); sin columnas extra.
-- [ ] RLS habilitada en `daycares` (`relrowsecurity = true`) y 0 policies registradas.
-- [ ] `list_tables` (verbose) muestra la tabla con sus constraints.
-- [ ] `select * from public.daycares` devuelve exactamente 1 fila con `name = 'Guardería Sala Soles'`.
-- [ ] Un `insert ... returning *` y el `delete` correspondientes funcionan vía `execute_sql` (dejan la tabla con la fila del seed).
-- [ ] `list_migrations` registra `create_daycares` y `seed_daycares` en el remoto.
-- [ ] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos (la app no cambió).
-- [ ] La app Next.js no importa nada de Supabase ni tiene env vars nuevas.
-- [ ] `git status` sin archivos temporales (`supabase/.temp` ignorado).
+- [x] La referencia `db-schema` de `opencode.json` apunta a `../07-DB-Schema` y su lectura resuelve.
+- [x] `supabase/config.toml`, `supabase/.gitignore` y los 2 ficheros de `supabase/migrations/` están versionados; ningún archivo de Supabase vive fuera de `supabase/`.
+- [x] El nombre de cada fichero de migración lleva el timestamp real (formato `<YYYYMMDDHHMMSS>_nombre.sql`).
+- [x] En el remoto, `public.daycares` tiene exactamente `id` (uuid PK, default `gen_random_uuid()`), `name` (text NOT NULL) y `created_at` (timestamptz NOT NULL default `now()`); sin columnas extra.
+- [x] RLS habilitada en `daycares` (`relrowsecurity = true`) y 0 policies registradas.
+- [x] `list_tables` (verbose) muestra la tabla con sus constraints.
+- [x] `select * from public.daycares` devuelve exactamente 1 fila con `name = 'Guardería Sala Soles'`.
+- [x] Un `insert ... returning *` y el `delete` correspondientes funcionan vía `execute_sql` (dejan la tabla con la fila del seed).
+- [x] `list_migrations` registra `create_daycares` y `seed_daycares` en el remoto.
+- [x] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos (la app no cambió).
+- [x] La app Next.js no importa nada de Supabase ni tiene env vars nuevas.
+- [x] `git status` sin archivos temporales (`supabase/.temp` ignorado).
 
 ## Decisiones
 
