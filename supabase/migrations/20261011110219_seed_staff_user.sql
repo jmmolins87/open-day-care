@@ -1,3 +1,6 @@
+-- Staff de prueba (solo test):
+--   email:    staff@solles.test
+--   password: staff1234
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
   email_confirmed_at, raw_app_meta_data, raw_user_meta_data,

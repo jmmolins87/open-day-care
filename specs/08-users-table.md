@@ -5,6 +5,9 @@
 > **Fecha:** 2026-10-11
 > **Objetivo:** Crear la tabla `public.users` (1 usuario ↔ 1 daycare; 1 daycare ↔ N usuarios) con sus enums, el trigger de autoalta desde `auth.users` y una fila de seed de usuario staff de prueba, aplicando las migraciones por MCP sobre el proyecto remoto.
 
+> **Credenciales del usuario staff de prueba** (solo test; también en el comentario del fichero seed):
+> `staff@solles.test` / `staff1234`
+
 ## Alcance
 
 **Incluye:**
