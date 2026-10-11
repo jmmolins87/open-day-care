@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Kid } from "@/data/mock/kids";
+import type { Kid } from "@/types/kid";
 import { invite } from "@/data/mock/auth";
 import { CloseIcon, InfoIcon, SendIcon } from "@/components/shared/icons";
 

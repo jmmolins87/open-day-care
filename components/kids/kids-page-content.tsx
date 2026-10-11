@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { kids, type Kid } from "@/data/mock/kids";
 import { PlusIcon } from "@/components/shared/icons";
+import type { Kid } from "@/types/kid";
 import KidsDirectory from "./kids-directory";
 import AddKidModal, { type AddKidFormValues } from "./add-kid-modal";
 
@@ -23,12 +23,19 @@ function createKid(values: AddKidFormValues, id: number): Kid {
   };
 }
 
-export default function KidsPageContent() {
-  const [list, setList] = useState<Kid[]>(kids);
+export interface KidsPageContentProps {
+  kids: Kid[];
+}
+
+export default function KidsPageContent({ kids: initialKids }: KidsPageContentProps) {
   const [open, setOpen] = useState(false);
+  const [list, setList] = useState<Kid[]>(initialKids);
 
   function handleSave(values: AddKidFormValues) {
-    const id = Math.max(...list.map((kid) => kid.id)) + 1;
+    const maxId = Math.max(
+      ...list.map((kid) => Number(kid.id))
+    );
+    const id = maxId + 1;
     setList((prev) => [...prev, createKid(values, id)]);
     setOpen(false);
   }
