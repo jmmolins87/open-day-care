@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Kid, KidParent } from "@/data/mock/kids";
+import type { KidParent } from "@/data/mock/kids";
+import type { Kid } from "@/types/kid";
 import { invite } from "@/data/mock/auth";
 import KidProfile from "./kid-profile";
 import LinkParentModal, { type LinkParentFormValues } from "./link-parent-modal";

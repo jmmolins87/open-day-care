@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { alertStyles, type Kid, type KidParent } from "@/data/mock/kids";
+import { alertStyles, type KidParent } from "@/data/mock/kids";
+import type { Kid } from "@/types/kid";
 import { ChevronLeftIcon, PlusIcon, SunIcon, WarningIcon } from "@/components/shared/icons";
 
 function parentStatusText(parent: KidParent): string {
@@ -28,10 +29,10 @@ function AlertBox({ kid }: { kid: Kid }) {
 
   const style =
     kid.alerts.length > 0
-      ? alertStyles[kid.alerts[0]]
+      ? alertStyles[kid.alerts[0] as keyof typeof alertStyles]
       : { label: "", bg: "#FBDAD6", text: "#C5413A" };
   const body =
-    kid.notes ?? kid.alerts.map((alert) => alertStyles[alert].label).join(", ");
+    kid.notes ?? kid.alerts.map((alert) => alertStyles[alert as keyof typeof alertStyles].label).join(", ");
 
   return (
     <div

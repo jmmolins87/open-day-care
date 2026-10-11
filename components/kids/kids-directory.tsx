@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Kid } from "@/data/mock/kids";
+import type { Kid } from "@/types/kid";
 import { SearchIcon } from "@/components/shared/icons";
 import KidCard from "./kid-card";
 
