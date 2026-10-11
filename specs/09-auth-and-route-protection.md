@@ -141,19 +141,19 @@ interface SidebarProfile {
 
 **UI con datos reales**
 
-- [ ] Logueado con el staff seed, el sidebar muestra "Staff Demo" y "Personal" (sin sala).
-- [ ] El feed muestra "Buenas, Staff" y las publicaciones nuevas salen con autor "Staff".
-- [ ] Logout borra la sesión y lleva a `/login`; a partir de ahí `/` redirige a `/login`.
-- [ ] "Nueva publicación" abre el modal y la URL vuelve a `/`.
-- [ ] `/kids` y `/kids/1` conservan sidebar, header móvil y contenido igual que hoy.
-- [ ] Usuario autenticado sin fila en `public.users`: el sidebar muestra la parte local de su email, sin rol, y no hay bucle de redirects.
-- [ ] 0 errores de consola en Playwright (1280 y 390×844) y sin desbordes en móvil.
+- [x] Logueado con el staff seed, el sidebar muestra "Staff Demo" y "Personal" (sin sala).
+- [x] El feed muestra "Buenas, Staff" y las publicaciones nuevas salen con autor "Staff".
+- [x] Logout borra la sesión y lleva a `/login`; a partir de ahí `/` redirige a `/login`.
+- [x] "Nueva publicación" abre el modal y la URL vuelve a `/`.
+- [x] `/kids` y `/kids/1` conservan sidebar, header móvil y contenido igual que hoy.
+- [x] Usuario autenticado sin fila en `public.users`: el sidebar muestra la parte local de su email, sin rol, y no hay bucle de redirects.
+- [x] 0 errores de consola en Playwright (1280 y 390×844) y sin desbordes en móvil.
 
 **Calidad**
 
-- [ ] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos.
-- [ ] `data/mock/user.ts` no existe y ningún fichero importa `mock/user` ni usa `onNewPost`.
-- [ ] `git status` sin temporales; servidor dev apagado al terminar.
+- [x] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos.
+- [x] `data/mock/user.ts` no existe y ningún fichero importa `mock/user` ni usa `onNewPost`.
+- [x] `git status` sin temporales; servidor dev apagado al terminar.
 
 ## Decisiones
 
@@ -173,6 +173,7 @@ interface SidebarProfile {
 - **Sí:** `active` del sidebar derivado de `usePathname` (`/kids*` → `/kids`).
 - **Sí:** "Nueva publicación" vía `?create=1` + `searchParams` de server — la prop `onNewPost` queda muerta y se borra.
 - **Sí:** saludo y autor del feed con perfil real; `GUARDERÍA · SALA SOLES` como texto de marca hardcodeado (igual que el logo del sidebar), porque la tabla `rooms` no existe todavía.
+- **Sí:** `export const instant = false` + `await connection()` en `app/(dashboard)/layout.tsx` y `app/(dashboard)/page.tsx` — con Cache Components (Next 16) el layout y la página se prerenderizan por separado; leer la sesión (`getUser()`/`cookies()`) o `searchParams` en el prerender dispara errores "unstable Date.now" / "URL data outside Suspense". Patrón sancionado por las guías *authentication-with-cache-components* e *instant-navigation* de Next.
 - **Sí:** errores de GoTrue traducidos al español solo para los conocidos; el resto, texto literal.
 - **Sí:** borrar `data/mock/user.ts` al quedar sin usos (regla del repo: sin código muerto).
 - **No:** selector de rol Personal/Familia en `/login` — eliminado en SPEC 03; `signInWithPassword` no distingue rol y el login navega siempre a `/`.
@@ -190,6 +191,7 @@ interface SidebarProfile {
 | `next` con open redirect | `safeNext`: solo paths que empiezan por `/`, no por `//` y sin `\` ni whitespace |
 | Ruptura del flujo del modal al borrar `onNewPost` | Criterio explícito de "?create=1" verificado con Playwright |
 | `searchParams` exige render dinámico o Suspense | Se lee en server component (page); si el build exige Suspense, se envuelve |
+| Cache Components (Next 16) prerenderiza layout y page por separado, provocando errores "Date.now" / "URL data" en `getUser()`/`searchParams` | `export const instant = false` + `await connection()` en layout y page (patrón oficial de Next) |
 | Usuario sin fila en `public.users` (signup sin `daycare_id`, comportamiento diseñado en SPEC 08) | Fallback de nombre en el sidebar |
 | Servidor dev olvidado tras las pruebas con Playwright | Regla de AGENTS.md: bajarlo en el paso 12 |
 

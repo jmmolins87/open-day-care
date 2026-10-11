@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import type { NavItem } from "@/data/mock/nav";
 import { CloseIcon, MenuIcon, SunIcon } from "./icons";
-import Sidebar from "./sidebar";
+import Sidebar, { type SidebarProfile } from "./sidebar";
 
 interface MobileHeaderProps {
   active: NavItem["href"];
-  onNewPost?: () => void;
+  profile: SidebarProfile;
 }
 
-export default function MobileHeader({ active, onNewPost }: MobileHeaderProps) {
+export default function MobileHeader({ active, profile }: MobileHeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const closeDrawer = () => setIsDrawerOpen(false);
@@ -55,17 +55,7 @@ export default function MobileHeader({ active, onNewPost }: MobileHeaderProps) {
             className="fixed inset-0 z-40 bg-black/40"
           />
           <div className="fixed inset-y-0 left-0 z-50">
-            <Sidebar
-              active={active}
-              onNewPost={
-                onNewPost
-                  ? () => {
-                      closeDrawer();
-                      onNewPost();
-                    }
-                  : undefined
-              }
-            />
+            <Sidebar active={active} profile={profile} />
             <button
               type="button"
               onClick={closeDrawer}

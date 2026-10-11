@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { navItems, type NavItem } from "@/data/mock/nav";
-import { user } from "@/data/mock/user";
+import { signOut } from "@/utils/actions/auth";
 import { LogOutIcon, navIcons, PlusIcon, SunIcon, type NavIconName } from "./icons";
+
+export interface SidebarProfile {
+  name: string;
+  initial: string;
+  roleLabel: string | null;
+}
 
 interface SidebarProps {
   active: NavItem["href"];
   className?: string;
-  onNewPost?: () => void;
+  profile: SidebarProfile;
 }
 
 const newPostClassName =
@@ -32,7 +38,7 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   );
 }
 
-export default function Sidebar({ active, className = "", onNewPost }: SidebarProps) {
+export default function Sidebar({ active, className = "", profile }: SidebarProps) {
   return (
     <aside
       className={`sticky top-0 flex h-screen w-[248px] flex-none flex-col border-r border-border bg-surface p-6 px-4 ${className}`}
@@ -54,21 +60,10 @@ export default function Sidebar({ active, className = "", onNewPost }: SidebarPr
         </span>
       </Link>
 
-      {onNewPost ? (
-        <button
-          type="button"
-          onClick={onNewPost}
-          className={`${newPostClassName} cursor-pointer`}
-        >
-          <PlusIcon className="h-[17px] w-[17px]" strokeWidth={2.4} />
-          Nueva publicación
-        </button>
-      ) : (
-        <Link href="/?create=1" className={newPostClassName}>
-          <PlusIcon className="h-[17px] w-[17px]" strokeWidth={2.4} />
-          Nueva publicación
-        </Link>
-      )}
+      <Link href="/?create=1" className={newPostClassName}>
+        <PlusIcon className="h-[17px] w-[17px]" strokeWidth={2.4} />
+        Nueva publicación
+      </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => (
@@ -83,23 +78,27 @@ export default function Sidebar({ active, className = "", onNewPost }: SidebarPr
       <div className="mt-[10px] border-t border-border pt-[14px]">
         <div className="flex items-center gap-[11px] px-2 py-1.5">
           <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-accent font-heading text-[16px] font-semibold text-white">
-            {user.initial}
+            {profile.initial}
           </span>
           <span className="block min-w-0 flex-1">
             <span className="block text-sm font-extrabold text-ink">
-              {user.name}
+              {profile.name}
             </span>
-            <span className="block text-xs text-ink-muted">
-              {user.role} · {user.room}
-            </span>
+            {profile.roleLabel && (
+              <span className="block text-xs text-ink-muted">
+                {profile.roleLabel}
+              </span>
+            )}
           </span>
-          <Link
-            href="/login"
-            title="Cerrar sesión"
-            className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-page text-ink-soft"
-          >
-            <LogOutIcon className="h-4 w-4" />
-          </Link>
+          <form action={signOut}>
+            <button
+              type="submit"
+              title="Cerrar sesión"
+              className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[10px] bg-page text-ink-soft"
+            >
+              <LogOutIcon className="h-4 w-4" />
+            </button>
+          </form>
         </div>
       </div>
     </aside>
