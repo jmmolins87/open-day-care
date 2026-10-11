@@ -56,10 +56,10 @@ supabase/migrations/
 
 ## Criterios de aceptación
 
-- [ ] 3 rooms existen en la BD: sol, estrella, arcoiris.
-- [ ] Todos los children tienen un `room_id` no nulo asignado.
-- [ ] La columna `children.room_id` tiene restricción NOT NULL.
-- [ ] No hay children con `room_id` NULL en la base de datos.
+- [x] 3 rooms existen en la BD: sol, estrella, arcoiris.
+- [x] Todos los children tienen un `room_id` no nulo asignado.
+- [x] La columna `children.room_id` tiene restricción NOT NULL.
+- [x] No hay children con `room_id` NULL en la base de datos.
 
 ## Decisiones
 
