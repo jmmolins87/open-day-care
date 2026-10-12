@@ -276,6 +276,102 @@ export async function fetchChildrenByRoom(
  * Verifies RLS policies state for the children table.
  * Returns a list of observations about the current RLS configuration.
  */
+/**
+ * Fetches parents for a child (both accepted via parent_children and pending via invitations).
+ * Uses the browser client - only for Client Components ("use client").
+ */
+export async function fetchParentsForChild(childId: string): Promise<{
+  parents: {
+    id: string;
+    name: string;
+    relation: "father" | "mother" | "guardian";
+    initial: string;
+    avatarColor: string;
+    avatarText: string;
+    status: "active" | "pending";
+    email?: string;
+  }[];
+}> {
+  const supabase = (await import("@/utils/supabase/client")).createClient();
+
+  const palette = ["#C9B6E8", "#A9C7E8", "#F4B8CC", "#F4DC8E", "#B9DEC4"];
+
+  // Fetch accepted parents via parent_children + users
+  const { data: parentChildren, error: pcError } = await supabase
+    .from("parent_children")
+    .select(`
+      id,
+      parent_id,
+      relationship,
+      users:parent_id (
+        id,
+        full_name
+      )
+    `)
+    .eq("child_id", childId);
+
+  if (pcError) {
+    console.error("Error fetching parent_children:", pcError);
+  }
+
+  // Fetch pending invitations
+  const { data: invitations, error: invError } = await supabase
+    .from("invitations")
+    .select("id, full_name, email, relationship, code")
+    .eq("child_id", childId)
+    .eq("status", "pending");
+
+  if (invError) {
+    console.error("Error fetching invitations:", invError);
+  }
+
+  const parents: {
+    id: string;
+    name: string;
+    relation: "father" | "mother" | "guardian";
+    initial: string;
+    avatarColor: string;
+    avatarText: string;
+    status: "active" | "pending";
+    email?: string;
+  }[] = [];
+
+  // Process accepted parents
+  if (parentChildren) {
+    parentChildren.forEach((pc: any, index: number) => {
+      if (pc.users) {
+        parents.push({
+          id: pc.id,
+          name: pc.users.full_name,
+          relation: pc.relationship,
+          initial: pc.users.full_name[0].toUpperCase(),
+          avatarColor: palette[index % palette.length],
+          avatarText: "#FFFFFF",
+          status: "active",
+        });
+      }
+    });
+  }
+
+  // Process pending invitations
+  if (invitations) {
+    invitations.forEach((inv: any, index: number) => {
+      parents.push({
+        id: inv.id,
+        name: inv.full_name,
+        relation: inv.relationship,
+        initial: inv.full_name[0].toUpperCase(),
+        avatarColor: palette[(parents.length + index) % palette.length],
+        avatarText: "#FFFFFF",
+        status: "pending",
+        email: inv.email,
+      });
+    });
+  }
+
+  return { parents };
+}
+
 export function getRlsStatus(): string[] {
   const observations: string[] = [];
 

@@ -25,6 +25,17 @@ export interface SupabaseChild {
 // Type used by components that render kid cards and profiles
 // id can be string (from Supabase) or number (from mock data)
 // This interface maps Supabase data + room name for UI consumption
+export interface KidParent {
+  id: string | number;
+  name: string;
+  relation: "father" | "mother" | "guardian" | string;
+  initial: string;
+  avatarColor: string;
+  avatarText?: string;
+  status: "active" | "pending";
+  email?: string;
+}
+
 export interface Kid {
   id: string | number;
   name: string;
@@ -37,15 +48,7 @@ export interface Kid {
   joined: string;
   alerts: string[];
   notes?: string;
-  parents: Array<{
-    id: number;
-    name: string;
-    relation: string;
-    initial: string;
-    avatarColor: string;
-    status: "active" | "pending";
-    email?: string;
-  }>;
+  parents: KidParent[];
 }
 
 // Individual child data returned from Supabase queries (with room)

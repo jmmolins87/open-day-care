@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { alertStyles, type KidParent } from "@/data/mock/kids";
-import type { Kid } from "@/types/kid";
+import { alertStyles } from "@/data/mock/kids";
+import type { Kid, KidParent } from "@/types/kid";
 import { ChevronLeftIcon, PlusIcon, SunIcon, WarningIcon } from "@/components/shared/icons";
 
 function parentStatusText(parent: KidParent): string {
   if (parent.status === "pending") return "invitación enviada";
-  return parent.relation === "Papá" ? "activo" : "activa";
+  const relationLabels: Record<string, string> = {
+    father: "activo",
+    mother: "activa",
+    guardian: "activo",
+  };
+  return relationLabels[parent.relation] ?? "activo";
 }
 
 function ParentBadge({ parent }: { parent: KidParent }) {
