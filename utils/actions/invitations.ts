@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 
 type SendInvitationState = {
@@ -20,6 +21,24 @@ async function getDaycareIdFromChild(supabase: ReturnType<typeof createClient>, 
   const { data, error } = await supabase.rpc('child_daycare_id', { p_child_id: childId });
   if (error || !data) return null;
   return data;
+}
+
+async function resolveKidEmailContext(
+  supabase: ReturnType<typeof createClient>,
+  childId: string
+): Promise<{ kidFirstName: string; roomName: string }> {
+  const fallback = { kidFirstName: 'tu hijo/a', roomName: 'Soles' };
+  const { data, error } = await supabase
+    .from('children')
+    .select('full_name, rooms!children_room_id_fk ( name )')
+    .eq('id', childId)
+    .single();
+  if (error || !data) return fallback;
+  const fullName = typeof data.full_name === 'string' ? data.full_name : '';
+  const kidFirstName = fullName.split(' ')[0] || fallback.kidFirstName;
+  const rooms = data.rooms as { name?: string } | { name?: string }[] | null;
+  const roomName = Array.isArray(rooms) ? rooms[0]?.name : rooms?.name;
+  return { kidFirstName, roomName: roomName || fallback.roomName };
 }
 
 export async function sendInvitation(
@@ -55,16 +74,33 @@ export async function sendInvitation(
   }
 
   // Verificar que el staff pertenece al mismo daycare
-  const { data: profile } = await supabase.rpc('current_user_profile');
-  if (!profile || profile.daycare_id !== daycareId) {
-    return { error: 'No tienes permisos para invitar a este niño', code: null };
+  const { data: profileData, error: profileError } = await supabase.rpc('current_user_profile');
+  if (profileError) {
+    // Fallo del RPC (red, rate limit…): no es lo mismo que no tener permisos
+    console.error('[sendInvitation] current_user_profile RPC failed', profileError);
+    return { error: 'No se pudo verificar tu permiso, inténtalo de nuevo', code: null };
+  }
+  // current_user_profile() devuelve una fila de public.users; PostgREST puede
+  // devolver objeto o array de 1 elemento según versión. Normalizar aquí evita
+  // el falso "No tienes permisos" por leer .daycare_id de un array.
+  const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+  if (!profile) {
+    console.error('[sendInvitation] authenticated user has no public.users profile', { authUserId: user.id, childId });
+    return { error: 'No tienes permisos para invitar al padre/madre de este niño', code: null };
+  }
+  if (profile.daycare_id !== daycareId) {
+    console.error('[sendInvitation] daycare mismatch', { authUserId: user.id, profileDaycare: profile.daycare_id, childDaycare: daycareId, childId });
+    return { error: 'No tienes permisos para invitar al padre/madre de este niño', code: null };
   }
   if (!['staff', 'admin'].includes(profile.role)) {
     return { error: 'Solo el personal puede enviar invitaciones', code: null };
   }
 
-  // Generar código único (reintentar si hay conflicto)
-  let code = generateCode();
+  // Generar código único en servidor (reintentar si hay conflicto).
+  // Se acepta `code` del form por compatibilidad si tiene formato válido,
+  // pero la modal ya no lo pre-genera: lo normal es generarlo aquí.
+  const requestedCode = String(formData.get('code') ?? '').trim().toUpperCase();
+  let code = /^[A-Z2-9]{5}$/.test(requestedCode) ? requestedCode : generateCode();
   let attempt = 0;
   const maxAttempts = 5;
 
@@ -99,10 +135,11 @@ export async function sendInvitation(
     return { error: 'No se pudo generar un código único, inténtalo de nuevo', code: null };
   }
 
-  // Enviar correo
+  // Enviar correo al email introducido por el usuario (formData.email ya validado).
+  // En dev con FROM=onboarding@resend.dev solo entrega al email de la cuenta
+  // Resend (jmmolins87@gmail.com): probar escribiendo ese email en la modal.
   const { sendInvitationEmail } = await import('@/utils/email/invitation-email');
-  const kidFirstName = fullName.split(' ')[0];
-  const roomName = 'Sala'; // se podría obtener via query si se quiere
+  const { kidFirstName, roomName } = await resolveKidEmailContext(supabase, childId);
 
   const { error: emailError } = await sendInvitationEmail({
     to: email,
@@ -117,6 +154,9 @@ export async function sendInvitation(
     await supabase.from('invitations').delete().eq('code', code);
     return { error: `Error enviando el correo: ${emailError.message}`, code: null };
   }
+
+  revalidatePath(`/kids/${childId}`);
+  revalidatePath('/kids');
 
   return { error: null, code };
 }

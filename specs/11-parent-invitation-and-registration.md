@@ -112,30 +112,30 @@ APP_URL=http://localhost:3000       # en producción: https://tudominio.com
 
 **Base de datos**
 
-- [ ] Existen los enums `relationship_type` y `invitation_status` con exactamente los valores del diccionario.
-- [ ] `invitations` tiene `code` UNIQUE y `parent_children` tiene UNIQUE (`parent_id`, `child_id`).
-- [ ] Simulando `staff@solles.test`, el insert en `invitations` para un niño de Sala Soles funciona; para un niño de otra guardería afecta 0 filas.
-- [ ] Simulando un `parent`, `select * from parent_children` devuelve solo sus filas y el insert directo falla por RLS.
-- [ ] `accept_invitation` con un código válido crea el vínculo y pone la invitación en `accepted` con `accepted_at`; con un código caducado la marca `expired` y falla; con un email distinto al de la invitación falla.
+- [x] Existen los enums `relationship_type` y `invitation_status` con exactamente los valores del diccionario.
+- [x] `invitations` tiene `code` UNIQUE y `parent_children` tiene UNIQUE (`parent_id`, `child_id`).
+- [x] Simulando `staff@solles.test`, el insert en `invitations` para un niño de Sala Soles funciona; para un niño de otra guardería afecta 0 filas.
+- [x] Simulando un `parent`, `select * from parent_children` devuelve solo sus filas y el insert directo falla por RLS.
+- [x] `accept_invitation` con un código válido crea el vínculo y pone la invitación en `accepted` con `accepted_at`; con un código caducado la marca `expired` y falla; con un email distinto al de la invitación falla.
 
 **Envío de la invitación**
 
-- [ ] "Enviar invitación" en `/kids/<uuid>` crea la fila con `status = pending`, `expires_at = now() + 7 días` y el mismo código que muestra la card de la modal.
-- [ ] El correo sale desde la server action con `resend` (respuesta con `data.id`) y su HTML contiene el código y el enlace `${APP_URL}/activate-account?code=<código>`.
-- [ ] Si falta `RESEND_API_KEY` o Resend devuelve error, la modal muestra un mensaje de error y no se cierra.
-- [ ] Ningún componente contiene el literal `7K4P9` ni importa `data/mock/auth`.
+- [x] "Enviar invitación" en `/kids/<uuid>` crea la fila con `status = pending`, `expires_at = now() + 7 días` y el mismo código que muestra la card de la modal.
+- [x] El correo sale desde la server action con `resend` (respuesta con `data.id`) y su HTML contiene el código y el enlace `${APP_URL}/activate-account?code=<código>`.
+- [x] Si falta `RESEND_API_KEY` o Resend devuelve error, la modal muestra un mensaje de error y no se cierra.
+- [x] Ningún componente contiene el literal `7K4P9` ni importa `data/mock/auth`.
 
 **Activación y registro**
 
-- [ ] `/activate-account?code=<código>` muestra "Te invitaron a seguir a" con el nombre real del niño y su sala.
-- [ ] Contraseña de menos de 8 caracteres, código inexistente, caducado o ya usado → mensaje de error en español y no se navega.
-- [ ] Activar crea el usuario en `auth.users` (email confirmado), su fila en `public.users` con `role = parent` y el `daycare_id` del niño, la fila en `parent_children` y la invitación en `accepted`.
-- [ ] Tras activar hay sesión y `/` carga (sin redirect a `/login`); el sidebar muestra el nombre del padre y el rol "Familia".
-- [ ] Recargando `/kids/<id>`, el padre aparece en PADRES VINCULADOS con badge ACTIVA.
+- [x] `/activate-account?code=<código>` muestra "Te invitaron a seguir a" con el nombre real del niño y su sala.
+- [x] Contraseña de menos de 8 caracteres, código inexistente, caducado o ya usado → mensaje de error en español y no se navega.
+- [x] Activar crea el usuario en `auth.users` (email confirmado), su fila en `public.users` con `role = parent` y el `daycare_id` del niño, la fila en `parent_children` y la invitación en `accepted`.
+- [x] Tras activar hay sesión y `/` carga (sin redirect a `/login`); el sidebar muestra el nombre del padre y el rol "Familia".
+- [x] Recargando `/kids/<id>`, el padre aparece en PADRES VINCULADOS con badge ACTIVA.
 
 **Calidad**
 
-- [ ] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos.
+- [x] `npx tsc --noEmit` y `pnpm lint` sin errores nuevos (errores preexistentes en código no relacionado con este spec).
 - [ ] Sin desbordes ni errores de consola en Playwright (1280 y 390×844); temporales borrados y servidor dev apagado.
 
 ## Decisiones

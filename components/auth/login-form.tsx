@@ -1,11 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { signIn } from "@/utils/actions/auth";
+import { useGlobalLoader } from "@/components/loader/LoaderContext";
 
 export default function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signIn, { error: null });
+  const { show, hide } = useGlobalLoader();
+
+  // Server Actions have no client-side promise to wrap: bridge `pending`
+  // into the global loader so the top bar appears while signing in.
+  useEffect(() => {
+    if (!pending) return;
+    show("Ingresando…");
+    return () => hide();
+  }, [pending, show, hide]);
 
   return (
     <div className="flex items-center justify-center p-10">

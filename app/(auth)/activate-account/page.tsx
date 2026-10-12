@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import ActivateForm from "@/components/auth/activate-form";
 
+export const instant = false;
+
 interface InvitationData {
   id: string;
   child_id: string;

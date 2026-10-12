@@ -24,7 +24,6 @@ export interface InvitationEmailData {
 }
 
 export async function sendInvitationEmail(data: InvitationEmailData): Promise<{ data: { id: string } | null; error: Error | null }> {
-  const resend = getResend();
   const appUrl = process.env.APP_URL || 'http://localhost:3000';
   const from = process.env.RESEND_FROM || 'onboarding@resend.dev';
   const activationLink = `${appUrl}/activate-account?code=${data.code}`;
@@ -130,6 +129,7 @@ export async function sendInvitationEmail(data: InvitationEmailData): Promise<{ 
   `.trim();
 
   try {
+    const resend = getResend();
     const result = await resend.emails.send({
       from,
       to: [data.to],

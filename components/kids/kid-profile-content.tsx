@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { Kid } from "@/types/kid";
 import KidProfile from "./kid-profile";
 import LinkParentModal from "./link-parent-modal";
@@ -19,12 +20,16 @@ export default function KidProfileContent({ kid }: { kid: Kid }) {
   }>>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const loadParents = useCallback(async () => {
-    setLoading(true);
-    const { parents: fetched } = await fetchParentsForChild(String(kid.id));
-    setParents(fetched);
-    setLoading(false);
+  const loadParents = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const { parents: fetched } = await fetchParentsForChild(String(kid.id));
+      setParents(fetched);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [kid.id]);
 
   useEffect(() => {
@@ -32,9 +37,10 @@ export default function KidProfileContent({ kid }: { kid: Kid }) {
     loadParents();
   }, [loadParents]);
 
-  function handleSuccess() {
+  async function handleSuccess() {
     setOpen(false);
-    loadParents();
+    router.refresh();
+    await loadParents(true);
   }
 
   if (loading) {
