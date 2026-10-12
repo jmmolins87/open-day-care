@@ -1,6 +1,6 @@
 # SPEC 11 — Invitación real de padre (correo con Resend) y registro con código
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 05, SPEC 08, SPEC 09
 > **Fecha:** 2026-10-12
 > **Objetivo:** Al enviar una invitación desde la modal "Vincular padre", persistirla en `invitations`, enviarle el código al padre por correo con Resend y registrar al padre con ese código, creando el vínculo `parent_children`.
