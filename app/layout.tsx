@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import { LoaderProvider } from "@/components/loader/LoaderContext";
+import { GlobalLoaderBar, GlobalLoaderOverlay } from "@/components/loader/Loader";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -17,13 +19,19 @@ export const metadata: Metadata = {
   description: "Feed de la guardería OpenDayCare",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <LoaderProvider>
+          {children}
+          <GlobalLoaderBar />
+          <GlobalLoaderOverlay />
+        </LoaderProvider>
+      </body>
     </html>
   );
 }

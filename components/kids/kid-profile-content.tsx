@@ -1,38 +1,54 @@
 "use client";
 
-import { useState } from "react";
-import type { KidParent } from "@/data/mock/kids";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { Kid } from "@/types/kid";
-import { invite } from "@/data/mock/auth";
 import KidProfile from "./kid-profile";
-import LinkParentModal, { type LinkParentFormValues } from "./link-parent-modal";
-
-const parentPalette = ["#C9B6E8", "#A9C7E8", "#F4B8CC", "#F4DC8E", "#B9DEC4"];
+import LinkParentModal from "./link-parent-modal";
+import { fetchParentsForChild } from "@/utils/supabase/queries";
 
 export default function KidProfileContent({ kid }: { kid: Kid }) {
-  const [parents, setParents] = useState<KidParent[]>(kid.parents);
+  const [parents, setParents] = useState<Array<{
+    id: string;
+    name: string;
+    relation: "father" | "mother" | "guardian";
+    initial: string;
+    avatarColor: string;
+    avatarText: string;
+    status: "active" | "pending";
+    email?: string;
+  }>>([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  function handleSend(values: LinkParentFormValues) {
-    const newParent: KidParent = {
-      id: Math.max(...parents.map((parent) => parent.id), 0) + 1,
-      name: values.name,
-      relation: values.relation,
-      initial: values.name[0].toUpperCase(),
-      avatarColor: parentPalette[parents.length % parentPalette.length],
-      status: "pending",
-      email: values.email,
-    };
-    setParents((prev) => [...prev, newParent]);
-    Object.assign(invite, {
-      email: values.email,
-      kidName: kid.name.split(" ")[0],
-      kidInitial: kid.initial,
-      room: kid.room,
-      avatarBg: kid.avatarColor,
-      avatarText: kid.avatarText,
-    });
+  const loadParents = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const { parents: fetched } = await fetchParentsForChild(String(kid.id));
+      setParents(fetched);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [kid.id]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadParents();
+  }, [loadParents]);
+
+  async function handleSuccess() {
     setOpen(false);
+    router.refresh();
+    await loadParents(true);
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-[820px] px-5 pb-20 pt-8 lg:px-10 lg:pt-[34px]">
+        <p className="text-center text-ink-muted">Cargando padres…</p>
+      </div>
+    );
   }
 
   return (
@@ -43,11 +59,7 @@ export default function KidProfileContent({ kid }: { kid: Kid }) {
         onLinkParent={() => setOpen(true)}
       />
       {open && (
-        <LinkParentModal
-          kid={kid}
-          onClose={() => setOpen(false)}
-          onSend={handleSend}
-        />
+        <LinkParentModal kid={kid} onClose={() => setOpen(false)} onSuccess={handleSuccess} />
       )}
     </div>
   );

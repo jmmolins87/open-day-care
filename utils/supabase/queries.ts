@@ -11,6 +11,39 @@
  * See: supabase_get_advisors for RLS status checking.
  */
 
+import { createClient } from "@/utils/supabase/client";
+import { withGlobalLoader } from "@/utils/loader/global-tracker";
+
+/** Raw row shape for `children` with the `rooms` join. */
+interface ChildRow {
+  id: string;
+  full_name: string;
+  birth_date: string | null;
+  enrolled_at: string | null;
+  medical_notes: string | null;
+  allergy_tags: string[] | null;
+  photo_consent: boolean;
+  status: string | null;
+  rooms: { id: string; name: string } | null;
+}
+
+/** Raw row shape for `parent_children` with the `users` join. */
+interface ParentChildRow {
+  id: string;
+  parent_id: string;
+  relationship: "father" | "mother" | "guardian";
+  users: { id: string; full_name: string } | { id: string; full_name: string }[] | null;
+}
+
+/** Raw row shape for pending `invitations`. */
+interface InvitationRow {
+  id: string;
+  full_name: string;
+  email: string;
+  relationship: "father" | "mother" | "guardian";
+  code: string;
+}
+
 /**
  * Fetches all children from Supabase with room name included.
  * Returns data formatted for the Kid interface used by components.
@@ -29,25 +62,27 @@ export async function fetchChildrenWithRoom(): Promise<{
     name: "sol" | "estrella" | "arcoiris";
   } | null;
 }[]> {
-  const supabase = (await import("@/utils/supabase/client")).createClient();
+  const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from("children")
-    .select(`
+  const { data, error } = await withGlobalLoader(() =>
+    supabase
+      .from("children")
+      .select(`
       *,
       rooms!children_room_id_fk (
         id,
         name
       )
     `)
-    .order("full_name", { ascending: true });
+      .order("full_name", { ascending: true }),
+  );
 
   if (error) {
     console.error("Error fetching children from Supabase:", error);
     return [];
   }
 
-  return (data || []).map((child: any) => {
+  return (data || []).map((child: ChildRow) => {
     const room = child.rooms
       ? {
           id: child.rooms.id,
@@ -100,19 +135,21 @@ export async function fetchChildById(id: string): Promise<{
     name: "sol" | "estrella" | "arcoiris";
   } | null;
 } | null> {
-  const supabase = (await import("@/utils/supabase/client")).createClient();
+  const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from("children")
-    .select(`
+  const { data, error } = await withGlobalLoader(() =>
+    supabase
+      .from("children")
+      .select(`
       *,
       rooms!children_room_id_fk (
         id,
         name
       )
     `)
-    .eq("id", id)
-    .single();
+      .eq("id", id)
+      .single(),
+  );
 
   if (error || !data) {
     return null;
@@ -150,65 +187,7 @@ export async function fetchChildById(id: string): Promise<{
   };
 }
 
-/**
- * Fetches a single child by ID from Supabase with room name included.
- * Uses the server client - for Server Components (no "use client").
- * Returns null if not found.
- */
-export async function fetchChildByIdServer(id: string): Promise<{
-  id: string;
-  full_name: string;
-  birth_date: string;
-  enrolled_at: string;
-  medical_notes: string | null;
-  allergy_tags: string[];
-  photo_consent: boolean;
-  status: string | null;
-  room: {
-    id: string;
-    name: "sol" | "estrella" | "arcoiris";
-  } | null;
-} | null> {
-  const { createClient } = await import("@/utils/supabase/server");
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
 
-  const { data, error } = await supabase
-    .from("children")
-    .select(`
-      *,
-      rooms!children_room_id_fk (
-        id,
-        name
-      )
-    `)
-    .eq("id", id)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  const room = data.rooms
-    ? {
-        id: data.rooms.id,
-        name: data.rooms.name as "sol" | "estrella" | "arcoiris",
-      }
-    : null;
-
-  return {
-    id: data.id,
-    full_name: data.full_name,
-    birth_date: data.birth_date || "",
-    enrolled_at: data.enrolled_at || "",
-    medical_notes: data.medical_notes,
-    allergy_tags: data.allergy_tags || [],
-    photo_consent: data.photo_consent,
-    status: data.status,
-    room,
-  };
-}
 
 /**
  * Fetches children filtered by room name.
@@ -232,26 +211,28 @@ export async function fetchChildrenByRoom(
     name: "sol" | "estrella" | "arcoiris";
   } | null;
 }[]> {
-  const supabase = (await import("@/utils/supabase/client")).createClient();
+  const supabase = createClient();
 
   // Fetch all children with room join, then filter locally by room name
-  const { data, error } = await supabase
-    .from("children")
-    .select(`
+  const { data, error } = await withGlobalLoader(() =>
+    supabase
+      .from("children")
+      .select(`
       *,
       rooms!children_room_id_fk (
         id,
         name
       )
     `)
-    .order("full_name", { ascending: true });
+      .order("full_name", { ascending: true }),
+  );
 
   if (error) {
     console.error("Error fetching children by room from Supabase:", error);
     return [];
   }
 
-  const allChildren = (data || []).map((child: any) => ({
+  const allChildren = (data || []).map((child: ChildRow) => ({
     id: child.id,
     full_name: child.full_name,
     birth_date: child.birth_date || "",
@@ -276,6 +257,107 @@ export async function fetchChildrenByRoom(
  * Verifies RLS policies state for the children table.
  * Returns a list of observations about the current RLS configuration.
  */
+/**
+ * Fetches parents for a child (both accepted via parent_children and pending via invitations).
+ * Uses the browser client - only for Client Components ("use client").
+ */
+export async function fetchParentsForChild(childId: string): Promise<{
+  parents: {
+    id: string;
+    name: string;
+    relation: "father" | "mother" | "guardian";
+    initial: string;
+    avatarColor: string;
+    avatarText: string;
+    status: "active" | "pending";
+    email?: string;
+  }[];
+}> {
+  const supabase = createClient();
+
+  const palette = ["#C9B6E8", "#A9C7E8", "#F4B8CC", "#F4DC8E", "#B9DEC4"];
+
+  // Fetch accepted parents via parent_children + users
+  const { data: parentChildren, error: pcError } = await withGlobalLoader(() =>
+    supabase
+      .from("parent_children")
+      .select(`
+      id,
+      parent_id,
+      relationship,
+      users:parent_id (
+        id,
+        full_name
+      )
+    `)
+      .eq("child_id", childId),
+  );
+
+  if (pcError) {
+    console.error("Error fetching parent_children:", pcError);
+  }
+
+  // Fetch pending invitations
+  const { data: invitations, error: invError } = await withGlobalLoader(() =>
+    supabase
+      .from("invitations")
+      .select("id, full_name, email, relationship, code")
+      .eq("child_id", childId)
+      .eq("status", "pending"),
+  );
+
+  if (invError) {
+    console.error("Error fetching invitations:", invError);
+  }
+
+  const parents: {
+    id: string;
+    name: string;
+    relation: "father" | "mother" | "guardian";
+    initial: string;
+    avatarColor: string;
+    avatarText: string;
+    status: "active" | "pending";
+    email?: string;
+  }[] = [];
+
+  // Process accepted parents
+  if (parentChildren) {
+    parentChildren.forEach((pc: ParentChildRow, index: number) => {
+      const user = Array.isArray(pc.users) ? pc.users[0] : pc.users;
+      if (user) {
+        parents.push({
+          id: pc.id,
+          name: user.full_name,
+          relation: pc.relationship,
+          initial: user.full_name[0].toUpperCase(),
+          avatarColor: palette[index % palette.length],
+          avatarText: "#FFFFFF",
+          status: "active",
+        });
+      }
+    });
+  }
+
+  // Process pending invitations
+  if (invitations) {
+    invitations.forEach((inv: InvitationRow, index: number) => {
+      parents.push({
+        id: inv.id,
+        name: inv.full_name,
+        relation: inv.relationship,
+        initial: inv.full_name[0].toUpperCase(),
+        avatarColor: palette[(parents.length + index) % palette.length],
+        avatarText: "#FFFFFF",
+        status: "pending",
+        email: inv.email,
+      });
+    });
+  }
+
+  return { parents };
+}
+
 export function getRlsStatus(): string[] {
   const observations: string[] = [];
 
